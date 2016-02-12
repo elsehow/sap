@@ -4,7 +4,8 @@ Super Automous Printer
 
 an api for [[https://learn.adafruit.com/pi-thermal-printer/][adafruit's IoT printer]].
 
-* setup
+* Setting up the printer
+** Raspberry Pi setup
 
 Let's assume you've already assembled the printer physically, and configured it to be accesisble wirelessly over SSH.
 
@@ -46,13 +47,32 @@ sudo python printertest.py
 
 Hooray!
 
-* usage
+** Server setup
+
+Now, write a file called =config.js= to store your secret API key.
+
+#+BEGIN_SRC js 
+module.exports = 'my-secret-key'
+#+END_SRC
+
+Make sure your API key is unguessable. Anyone who has it will be able to print stuff over your printer!
+
+Now, simply =npm start= to start the server as a daemon using [[http://npmjs.com/package/forever][forever]].
+
+#+BEGIN_SRC shell
+npm start
+#+END_SRC
+
+(If you ever want to stop your server, just do =npm run stop=).
+
+* Using the API
+** Printing stuff with POST requests of JSON
 
 We can use our API by sending JSON-formatted POST requests to indra.webfactional.com/
 
 JSON requests should look like this:
 
-#+BEGIN_SRC js :tangle test-remote-print.js
+#+BEGIN_SRC js 
 var payload = {
   type: 'my-secret-printer-key',
   message: 'hello my furry, lovely friends'
@@ -65,19 +85,26 @@ anyone with this key will be able to print to your printer. so keep it safe!
 
 (you can edit this key in =server.js=).
 
-now we can send a request to print:
+** Example client
 
-#+BEGIN_SRC js :tangle test-remote-print.js
+Here is a simple example client, in =example-client/client.js=.
 
-var request = require('request-json')
-var client = request.createClient('http://indra.webfactional.com')
+It will take strings to print via the command line
 
+To install it
 
-client.post('/', payload, function(err, res, body) {
-  console.log('posted')
-})
+#+BEGIN_SRC shell
+cd example-client
+npm install
 #+END_SRC
-* code / implementation
+
+And to use it, just
+
+#+BEGIN_SRC shell
+node client.js "my coooool message"
+#+END_SRC
+
+* Code / Implementation
 
 The API consists of two files, both written below: =printer-daemon.py= and =server.js=.
 
@@ -173,7 +200,7 @@ to load those dependencies.
 
 var socket = require('socket.io-client')('http://indra.webfactional.com')
   , exec = require('child_process').exec
-  , key = 'my-secret-printer-key'
+  , key = require('config.js')
 
 // format a string for passing over command line
 // by adding quotes to it
@@ -199,6 +226,40 @@ socket.on('connect', function () {
 
 #+END_SRC
 
+** example-client/client.js 
+*** 
+#+BEGIN_SRC js :tangle example-client/client.js
+var argv = process.argv.slice(2);
+  , key = require('../config.js')
+
+var payload = { 
+  type: key,
+  message: argv[0]
+  //message: 'hello my furry, lovely friends'
+}
+
+var request = require('request-json')
+var client = request.createClient('http://indra.webfactional.com')
+
+
+client.post('/', payload, function(err, res, body) {
+  console.log('posted')
+})
+#+END_SRC
+
+**** =example-client/package.json=
+
+#+BEGIN_SRC :tangle example-client/package.json
+
+{
+  "dependencies": {
+    "request-json": "^0.5.5"
+  }
+}
+
+#+END_SRC
+
+* TODO todos / improvements
 ** TODO configure server to start on boot
 
 Now let's get the server to start up
@@ -209,7 +270,6 @@ Edit  =/etc/rc.local=, and add these two lines at the end, before the =exit 0= l
 cd /home/pi/sap
 npm start
 #+END_SRC
-* TODO todos / improvements
 ** TODO change my secret key on the server
 ** TODO python script can run continuously as child process
 
