@@ -4,7 +4,8 @@
   "description": "a server for adafruit printer",
   "main": "server.js",
   "scripts": {
-    "start": "forever start -l server.log -o out.log -e err.log server.js"
+    "start": "forever start -a -l server.log -o out.log -e err.log server.js",
+    "stop": "forever stopall"
   },
   "repository": {
     "type": "git",

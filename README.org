@@ -77,9 +77,15 @@ client.post('/', payload, function(err, res, body) {
   console.log('posted')
 })
 #+END_SRC
-* implementation
+* code / implementation
 
-We'll now write two new files inside this repository: printer-daemon.py and server.js.
+The API consists of two files, both written below: =printer-daemon.py= and =server.js=.
+
+=printer-daemon.py= takes a string as a command line argument, and prints this string on the printer.
+
+=server.js= subscribes to an [[https://github.com/berkeley-biosense/indra-server][indra server]] instance. It receives messages by subscribing to events that have a secret API key in the =type= field of the JSON posted to the indra server.
+
+to develop, edit the code below, and [[http://orgmode.org/manual/Extracting-source-code.html][use emacs to tangle the file]].
 
 ** printer-daemon.py
 
@@ -134,7 +140,8 @@ First let's setup its =package.json=
   "description": "a server for adafruit printer",
   "main": "server.js",
   "scripts": {
-    "start": "forever start -l server.log -o out.log -e err.log server.js"
+    "start": "forever start -a -l server.log -o out.log -e err.log server.js",
+    "stop": "forever stopall"
   },
   "repository": {
     "type": "git",
