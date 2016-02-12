@@ -1,0 +1,253 @@
+* sap
+
+Super Automated Printer
+
+an api for [[https://learn.adafruit.com/pi-thermal-printer/][adafruit's IoT printer]].
+* setup
+
+Let's assume you've already assembled the printer physically, and configured it to be accesisble wirelessly over SSH.
+
+Now, we'll ssh into our server and follow the setup instructions from [[https://learn.adafruit.com/pi-thermal-printer/pi-setup-part-2][the adafruit tutorial]].
+
+#+BEGIN_SRC shell 
+#!/bin/bash
+
+# install requisite software
+curl -sLS https://apt.adafruit.com/add | sudo bash # add adafruit repos
+sudo apt-get update
+sudo apt-get install python-serial python-imaging python-unidecode # install python+recs
+sudo apt-get install node # install node
+
+# install thermal printer code
+sudo apt-get install git
+git clone https://github.com/elsehow/sap
+#+END_SRC
+
+Now, =sudo vi /boot/cmdline.txt= and change the contents to:
+
+#+BEGIN_SRC bash
+dwc_otg.lpm_enable=0 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait
+#+END_SRC
+
+Now, =sudo vi /etc/inittab= and comment out the last line. After you're done, the last line should read:
+
+#+BEGIN_SRC bash
+# T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
+#+END_SRC
+
+You should be able to print now:
+
+#+BEGIN_SRC shell
+cd sap
+sudo python printertest.py
+#+END_SRC
+
+A test print comes out. Hooray!
+* implementation
+
+We'll now write two new files inside this repository: printer-daemon.py and server.js.
+
+** printer-daemon.py
+
+Here's a script that accepts a string over command line argument.
+
+For example, 
+
+#+BEGIN_SRC shell
+python printer-daemon.py "hello"
+#+END_SRC
+
+We'll call this script =printer-daemon.py=.
+
+#+BEGIN_SRC python :tangle printer-daemon.py
+#!/usr/bin/python
+
+from Adafruit_Thermal import *
+import sys
+printer = Adafruit_Thermal("/dev/ttyAMA0", 19200, timeout=5)
+
+# print whatever came over argv[1]
+printer.println(sys.argv[1])
+
+# print some blank lines for clean tearing
+printer.println("")
+printer.println("")
+printer.println("")
+#+END_SRC
+
+Now let's make this script executable with
+
+#+BEGIN_SRC shell
+
+chmod +x printer-daemon.py
+
+#+END_SRC
+
+** server.js
+
+Finally, we'll make a script server.js.
+
+It will connect to indra.webfactional.com (or any other hostname running an [[https://github.com/berkeley-biosense/indra-server][indra server]] instance).
+
+*** package.json
+
+First let's setup its =package.json=
+
+#+BEGIN_SRC json :tangle package.json
+{
+  "name": "printer-server",
+  "version": "1.0.0",
+  "description": "a server for adafruit printer",
+  "main": "server.js",
+  "scripts": {
+    "start": "forever start -l server.log -o out.log -e err.log server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/elsehow/sap/"
+  },
+  "keywords": [
+    "iot"
+  ],
+  "author": "elsehow",
+  "license": "MIT",
+  "dependencies": {
+    "socket.io-client": "^1.4.5"
+  },
+  "devDependencies": {
+    "forever": "^0.15.1"
+  }
+}
+#+END_SRC
+
+now 
+
+#+BEGIN_SRC shell
+npm install
+#+END_SRC
+
+to load those dependencies.
+*** server.js
+#+BEGIN_SRC js :tangle server.js
+
+var socket = require('socket.io-client')('http://indra.webfactional.com')
+  , exec = require('child_process').exec
+  , key = 'my-secret-printer-key'
+
+// format a string for passing over command line
+// by adding quotes to it
+function format (str) {
+  return "\"" + str + "\""
+}
+
+
+function listen () {
+  // setup listener
+  socket.on(key, function (msg) {
+    console.log('heard', msg)
+    exec('./printer-daemon.py ' + format(msg.message), function (err, _) {
+      if (err) console.log('error printing!!', err)
+    })
+  })
+}
+
+socket.on('connect', function () {
+  listen()
+  console.log('connected to indra, listening on key', key)
+})
+
+#+END_SRC
+
+** TODO configure server to start on boot
+
+Now let's get the server to start up
+
+Edit  =/etc/rc.local=, and add these two lines at the end, before the =exit 0= line.
+
+#+BEGIN_SRC shell
+cd /home/pi/sap
+npm start
+#+END_SRC
+* usage
+CLOSED: [2016-02-11 Thu 15:15]
+
+We can use our API by sending messages over 
+
+#+BEGIN_SRC js
+
+var request = require('request-json')
+var client = request.createClient('http://indra.webfactional.com')
+
+var payload = {
+  type: 'my-secret-printer-key',
+  message: 'hello my furry, lovely friends'
+}
+
+var res = null
+
+client.post('/', payload, function(err, res, body) {
+  console.log('posted')
+  if (err) console.log(err)
+  if (res) console.log(res.statusCode)
+res=res
+})
+var socket = require('socket.io-client')('http://indra.webfactional.com')
+  , exec = require('child_process').exec
+  , key = 'my-secret-printer-key'
+
+// format a string for passing over command line
+// by adding quotes to it
+function format (str) {
+  return "\"" + str + "\""
+}
+
+
+function listen () {
+  // setup listener
+  socket.on(key, function (msg) {
+    console.log('heard', msg)
+    exec('./printer-daemon.py ' + format(msg.message), function (err, _) {
+      if (err) console.log('error printing!!', err)
+    })
+  })
+}
+
+socket.on('connect', function () {
+  listen()
+  console.log('connected to indra, listening on key', key)
+})
+#+END_SRC
+* TODO todos
+** TODO setup git repo
+*** TODO add adafruit libs
+*** TODO put it on github
+** TODO change my secret key on the server
+** TODO python script can run continuously as child process
+
+A python script could connect to the printer, and run contiuously, printing whenever a line is fed over stdin:
+
+#+BEGIN_SRC python
+from Adafruit_Thermal import *
+import sys
+printer = Adafruit_Thermal("/dev/ttyAMA0", 19200, timeout=5)
+
+for line in sys.stdin:
+  printer.println(line)
+#+END_SRC
+
+Then, we can launch this script as the child process of our node server:
+
+#+BEGIN_SRC js
+var proc = spawn('./printer-daemon.py')
+socket.on('msg', (msg) => proc.stdin.write(format(msg.message)))
+#+END_SRC
+** TODO format printer output (+images!!)
+There are a world of (unexplored) possibilities with regards to what the printer API can handle.
+*** TODO have a look and see what printer API exposes
+*** TODO dream on a DSL for describing this?
+**** TODO parse markdown to make this work?
+***** how do python markdown parsers work?
+****** are they represented in a way that makes it easy to call api methods on them?
+****** failing that, how do js parsers work?
+******* then we would have to transfer to python script
+******* so lets avoid this if possible
