@@ -1,6 +1,6 @@
 var socket = require('socket.io-client')('http://indra.webfactional.com')
   , exec = require('child_process').exec
-  , key = require('config.js')
+  , key = require('./config.js')
 
 // format a string for passing over command line
 // by adding quotes to it
