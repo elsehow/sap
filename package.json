@@ -1,0 +1,24 @@
+{
+  "name": "printer-server",
+  "version": "1.0.0",
+  "description": "a server for adafruit printer",
+  "main": "server.js",
+  "scripts": {
+    "start": "forever start -l server.log -o out.log -e err.log server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/elsehow/sap/"
+  },
+  "keywords": [
+    "iot"
+  ],
+  "author": "elsehow",
+  "license": "MIT",
+  "dependencies": {
+    "socket.io-client": "^1.4.5"
+  },
+  "devDependencies": {
+    "forever": "^0.15.1"
+  }
+}

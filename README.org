@@ -4,13 +4,11 @@ Super Automous Printer
 
 an api for [[https://learn.adafruit.com/pi-thermal-printer/][adafruit's IoT printer]].
 
-* Setup
-
-** ras pi setup
+* setup
 
 Let's assume you've already assembled the printer physically, and configured it to be accesisble wirelessly over SSH.
 
-Now, we'll ssh into our server and follow the setup instructions from [[https://learn.adafruit.com/pi-thermal-printer/pi-setup-part-2][the adafruit tutorial]].
+Now, we'll ssh into our server and follow the setup instructions, heavily inspired by [[https://learn.adafruit.com/pi-thermal-printer/pi-setup-part-2][the adafruit tutorial]], but including a few additions to make the api server run.
 
 #+BEGIN_SRC shell 
 #!/bin/bash
@@ -48,7 +46,7 @@ sudo python printertest.py
 
 Hooray!
 
-* Usage
+* usage
 
 We can use our API by sending JSON-formatted POST requests to indra.webfactional.com/
 
@@ -204,10 +202,7 @@ Edit  =/etc/rc.local=, and add these two lines at the end, before the =exit 0= l
 cd /home/pi/sap
 npm start
 #+END_SRC
-* TODO todos
-** TODO setup git repo
-*** TODO add adafruit libs
-*** TODO put it on github
+* TODO todos / improvements
 ** TODO change my secret key on the server
 ** TODO python script can run continuously as child process
 
