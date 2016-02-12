@@ -75,13 +75,11 @@ JSON requests should look like this:
 #+BEGIN_SRC js 
 var payload = {
   type: 'my-secret-printer-key',
-  message: 'hello my furry, lovely\nfriends'
+  message: 'hello my furry, lovely friends'
 }
 #+END_SRC
 
 where =type= refers to the secret key of the printer. (you set this key in a file called =config.js=, on your printer).
-
-notice how we can put linebreaks in messages using the =\n= newline symbol.
 
 ** Example client
 
@@ -99,8 +97,11 @@ npm install
 And to use it, just
 
 #+BEGIN_SRC shell
-node client.js "my coooool message"
+node client.js "my coooool 
+message"
 #+END_SRC
+
+Notice how newlines "just work."
 
 * Code / Implementation
 
@@ -268,8 +269,7 @@ Edit  =/etc/rc.local=, and add these two lines at the end, before the =exit 0= l
 cd /home/pi/sap
 npm start
 #+END_SRC
-** TODO change my secret key on the server
-** TODO python script can run continuously as child process
+** TODO speed deamon: python script can run continuously as child process
 
 A python script could connect to the printer, and run contiuously, printing whenever a line is fed over stdin:
 
@@ -289,12 +289,16 @@ var proc = spawn('./printer-daemon.py')
 socket.on('msg', (msg) => proc.stdin.write(format(msg.message)))
 #+END_SRC
 ** TODO format printer output (+images!!)
-There are a world of (unexplored) possibilities with regards to what the printer API can handle.
-*** TODO have a look and see what printer API exposes
-*** TODO dream on a DSL for describing this?
-**** TODO parse markdown to make this work?
-***** how do python markdown parsers work?
-****** are they represented in a way that makes it easy to call api methods on them?
-****** failing that, how do js parsers work?
-******* then we would have to transfer to python script
-******* so lets avoid this if possible
+*** TODO simple "reduced markdown" supporting bold + underline
+**** parse text char by char
+***** use printer.write() for each char
+**** UNLESS:
+***** char === *
+then we toggle printer.boldOn
+***** char === /
+then we toggle underlineOn
+*** TODO other things the API exposes
+**** image
+**** barcode
+**** line height
+**** text size
