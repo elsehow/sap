@@ -229,7 +229,7 @@ socket.on('connect', function () {
 ** example-client/client.js 
 *** 
 #+BEGIN_SRC js :tangle example-client/client.js
-var argv = process.argv.slice(2);
+var argv = process.argv.slice(2)
   , key = require('../config.js')
 
 var payload = { 
