@@ -75,15 +75,13 @@ JSON requests should look like this:
 #+BEGIN_SRC js 
 var payload = {
   type: 'my-secret-printer-key',
-  message: 'hello my furry, lovely friends'
+  message: 'hello my furry, lovely\nfriends'
 }
 #+END_SRC
 
-where =type= refers to the secret key of the printer.
+where =type= refers to the secret key of the printer. (you set this key in a file called =config.js=, on your printer).
 
-anyone with this key will be able to print to your printer. so keep it safe!
-
-(you can edit this key in =server.js=).
+notice how we can put linebreaks in messages using the =\n= newline symbol.
 
 ** Example client
 
