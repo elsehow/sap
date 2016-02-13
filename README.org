@@ -83,7 +83,7 @@ where =type= refers to the secret key of the printer. (you set this key in a fil
 
 ** Example client
 
-Here is a simple example client, in =example-client/client.js=.
+There is a simple example client, in =example-client/client.js=.
 
 It will take strings to print via the command line
 
@@ -92,16 +92,17 @@ To install it
 #+BEGIN_SRC shell
 cd example-client
 npm install
+npm link
 #+END_SRC
 
-And to use it, just
+Now you can use it from anywhere with
 
 #+BEGIN_SRC shell
-node client.js "my coooool 
+thermal-print "my coooool 
 message"
 #+END_SRC
 
-Notice how newlines "just work."
+Notice how newlines "just works."
 
 * Code / Implementation
 
@@ -228,6 +229,7 @@ socket.on('connect', function () {
 ** example-client/client.js 
 *** 
 #+BEGIN_SRC js :tangle example-client/client.js
+#!/usr/bin/env node
 var argv = process.argv.slice(2)
   , key = require('../config.js')
 
