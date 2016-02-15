@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import sys
 import re
-#from Adafruit_Thermal import *
+from Adafruit_Thermal import *
 printer = Adafruit_Thermal("/dev/ttyAMA0", 19200, timeout=5)
 
 # global vars
@@ -51,22 +51,26 @@ def my_print (line):
   return my_print(line[1:])
 
 def check_heading (line):
-  if line[0] == '#':
-    heading = re.findall('#+ ', ex1)[0]
+  if line.startswith('#'):
+    heading = re.findall('#+ ', line)[0]
     if len(heading) == 2:
      printer.setSize('L')
-    elif len.heading == 3:
+    elif len(heading) == 3:
       printer.setSize('M')
-    else
+    else:
       printer.setSize('N')
-    return re.split('#+ ')[1]
+    return re.split('#+ ', line)[1]
+  printer.setSize('N')
   return line
 
 # print whatever came over the cli argv1
 feed = sys.argv[1].split('\n')
 for line in feed:
-  l = check_heading(line
-  my_print(l)
+  if line is '\n' or line is '':
+    printer.feed(1)
+  else:
+    l = check_heading(line)
+    my_print(l)
 # print some blank lines for clean tearing
 printer.feed(3)
 
