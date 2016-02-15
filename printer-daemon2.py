@@ -1,8 +1,12 @@
+#!/usr/bin/python
+import sys
+from Adafruit_Thermal import *
+printer = Adafruit_Thermal("/dev/ttyAMA0", 19200, timeout=5)
+
 # global vars
 bold = False
-italics = False
+underline = False
 
-# returns true if
 def has_match (symbol, rest_of_string):
   return rest_of_string.find(symbol) > -1
 
@@ -12,58 +16,62 @@ def handle_bold (line):
     global bold
     if bold:
       bold = False
-      print 'UNDOING BOLD!!!!'
+      printer.boldOff()
       return True
     if not bold and has_match('*', line[1:]):
       bold = True
-      print 'DOING BOLD!!!!'
+      printer.boldOn()
       return True
   return False
 
-def handle_italics (line):
+def handle_underline (line):
   char = line[0]
   if char == '/':
-    global italics
-    if italics:
-      italics = False
-      print 'UNDOING ITALICS!!!!'
+    global underline
+    if underline:
+      underline = False
+      printer.underlineOff()
       return True
-    if not italics and has_match('/', line[1:]):
-      bold = True
-      print 'DOING ITALICS!!!!'
+    if not underline and has_match('/', line[1:]):
+      underline = True
+      printer.underlineOn(2)
       return True
   return False
 
 def my_print (line):
-  handled_b = handle_bold(line)
-  handled_i = handle_italics(line)
-  if not handled_b and not handled_i:
-    print(line[0])
+  h_b = handle_bold(line)
+  h_u = handle_underline(line)
+  if not h_b and not h_u:
+    printer.prnt(line[0])
   # if this is the last char, we're done
   if len(line) == 1:
     return
-  # otherwise, go through recursively with the rest of the line)
+  # otherwise, go through recursively with the rest of the line
   return my_print(line[1:])
 
+def check_heading (line):
+  if line.startswith('# '):
+    printer.setSize('L')
+    return line.split('# ')[1]
+  elif line.startswith('## '):
+    printer.setSize('M')
+    return line.split('## ')[1]
+  printer.setSize('N')
+  return line
 
-# testing
-ex = "this / is *fun* times"
-ex2 = "/this/ is *fun times"
-my_print(ex)
-my_print(ex2)
+# print whatever came over the cli
+for line in sys.stdin:
+  l = check_heading(line)
+  my_print(l)
+
+# print some blank lines for clean tearing
+printer.feed(3)
 
 
 
-# main algo
-# if * and has_match(*, str):
-#   if not bold:
-#     turn on bold
-#   else
-#     turn off bold
 
-# could make this dry-er (with underline)
 
-# handle heading
+# handle headings
 
 
 
