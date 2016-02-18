@@ -104,13 +104,15 @@ message"
 
 Notice how newlines "just works."
 
-* Code / Implementation
+* Code
 
 The API consists of two files, both written below: =printer-daemon.py= and =server.js=.
 
 =printer-daemon.py= takes a string as a command line argument, and prints this string on the printer.
 
 =server.js= subscribes to an [[https://github.com/berkeley-biosense/indra-server][indra server]] instance. It receives messages by subscribing to events that have a secret API key in the =type= field of the JSON posted to the indra server.
+
+finally, we have =example-client/client.js=, which shows how to query the api.
 
 to develop, edit the code below, and [[http://orgmode.org/manual/Extracting-source-code.html][use emacs to tangle the file]].
 
@@ -133,21 +135,15 @@ from Adafruit_Thermal import *
 import sys
 printer = Adafruit_Thermal("/dev/ttyAMA0", 19200, timeout=5)
 
-# print whatever came over argv[1]
-printer.println(sys.argv[1])
-
-# print some blank lines for clean tearing
-printer.println("")
-printer.println("")
-printer.println("")
+printer.feed(1)
+for line sys.stdin:
+    printer.println(line)
 #+END_SRC
 
 Now let's make this script executable with
 
 #+BEGIN_SRC shell
-
 chmod +x printer-daemon.py
-
 #+END_SRC
 
 ** server.js
@@ -199,23 +195,15 @@ to load those dependencies.
 #+BEGIN_SRC js :tangle server.js
 
 var socket = require('socket.io-client')('http://indra.webfactional.com')
-  , exec = require('child_process').exec
+  , spawn = require('child_process').spawn
   , key = require('./config.js')
-
-// format a string for passing over command line
-// by adding quotes to it
-function format (str) {
-  return "\"" + str + "\""
-}
-
+  , daemon = spawn('python', ['printer-daemon.py'])
 
 // setup listener
 function listen () {
   socket.on(key, function (msg) {
     console.log('heard', msg)
-    exec('python printer-daemon.py ' + format(msg.message), function (err, _) {
-      if (err) console.log('error printing!!', err)
-    })
+    daemon.stdin.write(msg.message)
   })
 }
 
@@ -227,7 +215,6 @@ socket.on('connect', function () {
 #+END_SRC
 
 ** example-client/client.js 
-*** 
 #+BEGIN_SRC js :tangle example-client/client.js
 #!/usr/bin/env node
 var argv = process.argv.slice(2)

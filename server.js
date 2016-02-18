@@ -1,21 +1,13 @@
 var socket = require('socket.io-client')('http://indra.webfactional.com')
-  , exec = require('child_process').exec
+  , spawn = require('child_process').spawn
   , key = require('./config.js')
-
-// format a string for passing over command line
-// by adding quotes to it
-function format (str) {
-  return "\"" + str + "\""
-}
-
+  , daemon = spawn('python', ['printer-daemon.py'])
 
 // setup listener
 function listen () {
   socket.on(key, function (msg) {
     console.log('heard', msg)
-    exec('python printer-daemon.py ' + format(msg.message), function (err, _) {
-      if (err) console.log('error printing!!', err)
-    })
+    daemon.stdin.write(msg.message)
   })
 }
 
