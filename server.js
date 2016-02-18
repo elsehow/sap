@@ -21,15 +21,11 @@ var printerS = Kefir.stream(function (e) {
   })
 })
 
-printerS.onError(logError)
-
 var socketS = Kefir.stream(function (e) {
   socket.on('connect', function () {
     e.emit(socket)
   })
 })
-
-socketS.onError(logError)
 
 // setup listener
 function printOnEvent (socket, printer) {
@@ -39,4 +35,6 @@ function printOnEvent (socket, printer) {
   return
 }
 
+socketS.onError(logError)
+printerS.onError(logError)
 socketS.combine(printerS, printOnEvent).log('ready')

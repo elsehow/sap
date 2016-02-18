@@ -1,10 +1,10 @@
 {
   "name": "printer-server",
-  "version": "1.0.0",
-  "description": "a server for adafruit printer",
+  "version": "2.0.0",
+  "description": "a websocket server for the adafruit printer",
   "main": "server.js",
   "scripts": {
-    "start": "forever start -a -l server.log -o out.log -e err.log server.js",
+    "start": "forever start -a -m 1 -l server.log -o out.log -e err.log server.js",
     "stop": "forever stopall"
   },
   "repository": {
@@ -15,7 +15,7 @@
     "iot"
   ],
   "author": "elsehow",
-  "license": "MIT",
+  "license": "BSD-2-Clause",
   "dependencies": {
     "kefir": "^3.2.0",
     "serialport": "^2.0.6",
