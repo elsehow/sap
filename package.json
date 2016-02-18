@@ -18,7 +18,9 @@
   "license": "MIT",
   "dependencies": {
     "kefir": "^3.2.0",
-    "socket.io-client": "^1.4.5"
+    "serialport": "^2.0.6",
+    "socket.io-client": "^1.4.5",
+    "thermalprinter": "^0.3.8"
   },
   "devDependencies": {
     "forever": "^0.15.1"
