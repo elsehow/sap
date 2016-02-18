@@ -7,28 +7,36 @@ var SerialPort = require('serialport').SerialPort
 var serialPort = new SerialPort('/dev/ttyAMA0', {baudrate: 19200 })   
 var Printer = require('thermalprinter');
 
+function logError (e) {
+  console.log('--------err--------')
+  console.log(e)
+}
+
 var printerS = Kefir.stream(function (e) {
   serialPort.on('open', function () {
     var printer = new Printer(serialPort)
     printer.on('ready', function () {
-      emitter.emit(printer)
+      e.emit(printer)
     })
-  })
-}
-
-var socketS = Kefir.stream(function (e) {
-  socket.on('connect', function () {
-    emitter.emit(socket)
   })
 })
 
-// setup listener
-function printOnEvent (printer, socket) {
-  socket.on(key, function (msg) {
-    printer.printLine(msg.message).print()
+printerS.onError(logError)
+
+var socketS = Kefir.stream(function (e) {
+  socket.on('connect', function () {
+    e.emit(socket)
   })
-  console.log('ready')
+})
+
+socketS.onError(logError)
+
+// setup listener
+function printOnEvent (socket, printer) {
+  socket.on(key, function (msg) {
+    printer.printLine(msg.message).printLine('').print()
+  })
+  return
 }
 
-
-printerS.combine(socketS, printOnEvent)
+socketS.combine(printerS, printOnEvent).log('ready')
