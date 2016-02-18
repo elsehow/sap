@@ -106,51 +106,15 @@ Notice how newlines "just works."
 
 * Code
 
-The API consists of two files, both written below: =printer-daemon.py= and =server.js=.
-
-=printer-daemon.py= takes a string as a command line argument, and prints this string on the printer.
-
 =server.js= subscribes to an [[https://github.com/berkeley-biosense/indra-server][indra server]] instance. It receives messages by subscribing to events that have a secret API key in the =type= field of the JSON posted to the indra server.
 
 finally, we have =example-client/client.js=, which shows how to query the api.
 
 to develop, edit the code below, and [[http://orgmode.org/manual/Extracting-source-code.html][use emacs to tangle the file]].
 
-** printer-daemon.py
-
-Here's a script that accepts a string over command line argument.
-
-For example, 
-
-#+BEGIN_SRC shell
-python printer-daemon.py "hello"
-#+END_SRC
-
-We'll call this script =printer-daemon.py=.
-
-#+BEGIN_SRC python :tangle printer-daemon.py
-#!/usr/bin/python
-
-from Adafruit_Thermal import *
-import sys
-printer = Adafruit_Thermal("/dev/ttyAMA0", 19200, timeout=5)
-
-printer.feed(1)
-for line sys.stdin:
-    printer.println(line)
-#+END_SRC
-
-Now let's make this script executable with
-
-#+BEGIN_SRC shell
-chmod +x printer-daemon.py
-#+END_SRC
-
 ** server.js
 
-Finally, we'll make a script server.js.
-
-It will connect to indra.webfactional.com (or any other hostname running an [[https://github.com/berkeley-biosense/indra-server][indra server]] instance).
+The server will connect to indra.webfactional.com (or any other hostname running an [[https://github.com/berkeley-biosense/indra-server][indra server]] instance).
 
 *** package.json
 
@@ -197,21 +161,37 @@ to load those dependencies.
 var socket = require('socket.io-client')('http://indra.webfactional.com')
   , spawn = require('child_process').spawn
   , key = require('./config.js')
-  , daemon = spawn('python', ['printer-daemon.py'])
+  , Kefir = require('kefir')
 
-// setup listener
-function listen () {
-  socket.on(key, function (msg) {
-    console.log('heard', msg)
-    daemon.stdin.write(msg.message)
+var SerialPort = require('serialport').SerialPort
+var serialPort = new SerialPort('/dev/ttyAMA0', {baudrate: 19200 })   
+var Printer = require('thermalprinter');
+
+var printerS = Kefir.stream(function (e) {
+  serialPort.on('open', function () {
+    var printer = new Printer(serialPort)
+    printer.on('ready', function () {
+      emitter.emit(printer)
+    })
   })
 }
 
-socket.on('connect', function () {
-  listen()
-  console.log('connected to indra, listening on key', key)
+var socketS = Kefir.stream(function (e) {
+  socket.on('connect', function () {
+    emitter.emit(socket)
+  })
 })
 
+// setup listener
+function printOnEvent (printer, socket) {
+  socket.on(key, function (msg) {
+    printer.printLine(msg.message).print()
+  })
+  console.log('ready')
+}
+
+
+printerS.combine(socketS, printOnEvent)
 #+END_SRC
 
 ** example-client/client.js 

@@ -1,19 +1,34 @@
 var socket = require('socket.io-client')('http://indra.webfactional.com')
   , spawn = require('child_process').spawn
   , key = require('./config.js')
+  , Kefir = require('kefir')
 
-function daemon () {
-  return spawn('python', ['printer-daemon.py'])
-}
+var SerialPort = require('serialport').SerialPort
+var serialPort = new SerialPort('/dev/ttyAMA0', {baudrate: 19200 })   
+var Printer = require('thermalprinter');
 
-// setup listener
-function listen () {
-  socket.on(key, function (msg) {
-    daemon().stdin.write(msg.message)
+var printerS = Kefir.stream(function (e) {
+  serialPort.on('open', function () {
+    var printer = new Printer(serialPort)
+    printer.on('ready', function () {
+      emitter.emit(printer)
+    })
   })
 }
 
-socket.on('connect', function () {
-  listen()
-  console.log('connected to indra, listening on key', key)
+var socketS = Kefir.stream(function (e) {
+  socket.on('connect', function () {
+    emitter.emit(socket)
+  })
 })
+
+// setup listener
+function printOnEvent (printer, socket) {
+  socket.on(key, function (msg) {
+    printer.printLine(msg.message).print()
+  })
+  console.log('ready')
+}
+
+
+printerS.combine(socketS, printOnEvent)
