@@ -1,0 +1,8 @@
+{
+  "name": "thermal-print",
+  "bin": "client.js",
+  "dependencies": {
+    "nexe": "^1.1.0",
+    "request-json": "^0.5.5"
+  }
+}
