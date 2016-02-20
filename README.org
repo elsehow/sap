@@ -22,6 +22,7 @@ sudo apt-get install node # install node
 # install thermal printer code
 sudo apt-get install git
 git clone https://github.com/elsehow/sap
+git checkout stable
 cd sap
 npm install
 #+END_SRC
